@@ -22,4 +22,5 @@ class MarvelService {
     }
 }
 
+// For test
 export default MarvelService;
