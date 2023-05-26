@@ -12,7 +12,10 @@ class CharList extends Component {
     state = {
         charList: [],
         loading: true,
-        error: false
+        error: false,
+        newItemLoading: false,
+        offset: 210,
+        charEnded: false
     }
 
     marvelService = new MarvelService();
@@ -21,9 +24,20 @@ class CharList extends Component {
         this.getCharList()
     }
 
-    onListLoad = (charList) => {
-        console.log(charList);
-        this.setState({charList, loading: false})   
+    onListLoad = (newCharList) => {
+        let ended = false;
+        if (newCharList.length < 9) {
+            ended = true
+        }
+
+
+        this.setState(({charList, offset}) => ({
+            charList: [...charList, ...newCharList],
+            loading: false,
+            newItemLoading: false,
+            offset: offset + 9,
+            charEnded: ended
+        })) 
     }
 
     onError = () => {
@@ -40,8 +54,39 @@ class CharList extends Component {
         .catch(this.onError)
     }
 
+    onRequest = (offset) => {
+        this.onCharListLoading();
+        this.marvelService
+        .getAllCharacters(offset)
+        .then(this.onListLoad)
+        .catch(this.onError)
+    }
+
+    onCharListLoading = () => {
+        this.setState({
+            newItemLoading: true
+        })
+    }
+
+
+    // selected item becomes active and possibility to select using keyboard
+    
+    itemRefs = [];
+
+    setRef = (ref) => {
+        this.itemRefs.push(ref);
+    }
+
+    selectedItem = (id) => {
+        this.itemRefs.forEach(item => item.classList.remove('char__item_selected'));
+        this.itemRefs[id].classList.add('char__item_selected');
+        this.itemRefs[id].focus();
+    }
+
+    // rendering items for charList
+    
     renderItems = (charList) => {
-        const items = charList.map((item) => {
+        const items = charList.map((item, i) => {
 
             let imgStyle = {objectFit : 'cover'};
 
@@ -51,7 +96,19 @@ class CharList extends Component {
             
             return (
                 <li className="char__item" key={item.id}
-                    onClick={() => {this.props.onCharSelect(item.id)}}>
+                    tabIndex={0}
+                    ref={this.setRef}
+                    onClick={() => {
+                        this.props.onCharSelect(item.id);
+                        this.selectedItem(i);
+                        }}
+                    onKeyDown={(e) => {
+                        if (e.key === ' ' || e.key === "Enter") {
+                            this.props.onCharSelect(item.id);
+                            this.selectedItem(i);
+                        }
+                    }}
+                    >
                     <img src={item.thumbnail} alt={item.name} style={imgStyle}/>
                     <div className="char__name">{item.name}</div>
                 </li>
@@ -67,7 +124,7 @@ class CharList extends Component {
 
 
     render () {
-        const {charList, loading, error} = this.state;
+        const {charList, loading, error, offset, newItemLoading, charEnded} = this.state;
 
         const items = this.renderItems(charList);
         const spinner = loading ? <Spinner/> : null;
@@ -79,7 +136,10 @@ class CharList extends Component {
                 {spinner}
                 {errorMessage}
                 {content}
-                <button className="button button__main button__long">
+                <button className="button button__main button__long"
+                        onClick={() => this.onRequest(offset)}
+                        disabled={newItemLoading}
+                        style={{display: charEnded ? 'none' : 'block'}}>
                     <div className="inner">load more</div>
                 </button>
             </div>

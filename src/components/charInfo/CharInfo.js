@@ -118,7 +118,7 @@ const View = ({char}) => {
     )
 }
 
-CharInfo.PropTypes = {
+CharInfo.propTypes = {
     charID: PropTypes.number
 }
 
