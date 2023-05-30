@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 import MarvelService from '../../services/MarvelService';
@@ -9,58 +9,47 @@ import ErrorMessage from '../errorMessage/ErrorMessage';
 import './charInfo.scss';
 
 
-class CharInfo extends Component {
+const CharInfo = (props) => {
 
-    state = {
-        char: null,
-        loading: false,
-        error: false
+    const [char, setChar] = useState();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(false);
+
+    const marvelService = new MarvelService();
+
+    useEffect(() => {
+        updateChar();
+    }, [])
+
+    const onCharLoading = () => {
+        setLoading(true)
     }
 
-    marvelService = new MarvelService();
-
-    componentDidMount() {
-        this.updateChar();
+    const onCharLoad = (char) => {
+        setChar(char);
+        setLoading(false);
     }
 
-    onCharLoading = () => {
-        this.setState({loading: true})
+    const onError = () => {
+        setError(true);
+        setLoading(false);
     }
 
-    onCharLoad = (char) => {
-        this.setState({
-            char, 
-            loading: false
-        })
-    }
-
-    onError = () => {
-        this.setState({
-            error: true, 
-            loading: false
-        })
-    }
-
-    updateChar = () => {
-        const {charID} = this.props;
+    const updateChar = () => {
+        const {charID} = props;
         if(!charID) return;
 
-        this.onCharLoading();
+        onCharLoading();
 
-        this.marvelService
+        marvelService
             .getCharacter(charID)
-            .then(this.onCharLoad)
-            .catch(this.onError)
+            .then(onCharLoad)
+            .catch(onError)
     }
 
-    componentDidUpdate(prevProps) {
-        if(this.props.charID !== prevProps.charID) {
-            this.updateChar();
-        }
-    }
-
-    render() {
-        const {char, loading, error} = this.state;
+    useEffect(() => {
+        updateChar();
+    }, [props.charID])
 
         const spinner = loading ? <Spinner/> : null;
         const errorMessage = error ? <ErrorMessage/> : null;
@@ -75,16 +64,21 @@ class CharInfo extends Component {
                 {content}
             </div>
         )
-    }
 }
 
 const View = ({char}) => {
     const {name, descr, thumbnail, homepage, wiki, comics} = char;
 
+    let imgStyle = {objectFit : 'cover'};
+
+    if(thumbnail === 'http://i.annihil.us/u/prod/marvel/i/mg/b/40/image_not_available.jpg') {
+        imgStyle = {objectFit: 'unset'}
+    }
+
     return (
         <>
                 <div className="char__basics">
-                    <img src={thumbnail} alt={name}/>
+                    <img src={thumbnail} alt={name} style={imgStyle}/>
                     <div>
                         <div className="char__info-name">{name}</div>
                         <div className="char__btns">
