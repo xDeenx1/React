@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
+
 import useMarvelService from '../../services/MarvelService';
 import Spinner from '../spinner/Spinner';
 import ErrorMessage from '../errorMessage/ErrorMessage';
@@ -34,8 +36,6 @@ const ComicsList = () => {
          
         initial ? setNewItemLoading(false) : setNewItemLoading(true);
 
-        console.log(offset);
-
         getAllComics(offset)
             .then(onListLoad)
     }
@@ -43,18 +43,17 @@ const ComicsList = () => {
     const itemRefs = useRef([]);
 
     const renderItems = (comicsList) => {
-        console.log(comicsList);
         const items = comicsList.map((item, i) => {
 
             return (
                 <li className="comics__item" key={item.id}
                     tabIndex={0}
                     ref={el => itemRefs.current[i] = el }>
-                    <a href="#">
+                    <Link to={`/comics/${item.id}`} >
                         <img src={item.thumbnail} alt={item.title} className="comics__item-img"/>
                         <div className="comics__item-name">{item.title}</div>
                         <div className="comics__item-price">{item.prices ? item.prices : `Not available`}</div>
-                    </a>
+                    </Link>
                 </li>
             )
         })
